@@ -851,8 +851,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 {	
 	
 	//需要设置的参数
-	double node_probability = 0.027;
-	double event_probability = 0.1458;
+	double node_probability = 0.127;
+	double event_probability = 0.0458;
 	double activity_attenuation   = 0.456;
 	double attraction_attenuation = 0.123;
 	double y = -0.03;
@@ -864,6 +864,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	
 	int active_event_nodeindex = 0;	
 	double max_event_attraction = 0;
+
 	int time_step = 0;
 	int newNodeAdd_index = 0;
 	int newEventAdd_index = 0;
@@ -879,7 +880,6 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	double max_activity_third = 0;
 	double term = 0;
 
-
 	double compare = 0;
 
 	srand(size_t(time(00)));
@@ -887,20 +887,19 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	struct Node_Attribute
 	{
 		vector<double> vecInterest;
+
 		double activity;
+		int timestep_node_gen;
+
 		double event_attraction;
 		int event_flag;
 		int event_response_number;
-		int timestep_node_gen;
 		int timestep_event_gen;
 	};
-
 	
 	UGraph::pGraph graph(new UGraph(4));
 	UNetwork<Node_Attribute>::pNetwork network(new UNetwork<Node_Attribute>(graph));
-
-	//x = pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030);
-	
+		
 	for(auto node = graph->begin(); node != graph->end(); node++)
 	{
 		UNetwork<Node_Attribute>::pNode temp(new Node_Attribute());
@@ -921,7 +920,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		{
 			network->GetNodeData(node)->event_attraction = 1;
 			network->GetNodeData(node)->event_response_number = rand() % event_response_number_init;
-			network->GetNodeData(active_event_nodeindex)->event_flag = 1;
+			network->GetNodeData(node)->event_flag = 1;
 		}
 
 	}
@@ -955,18 +954,19 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 
 			UNetwork<Node_Attribute>::pNode temp(new Node_Attribute());
 			temp->activity = 1;
+			temp->timestep_node_gen = 0;
+
 			temp->event_attraction = 0;
 			temp->event_flag = 0;
-			temp->event_response_number = 0;
-			temp->timestep_node_gen = 0;
-			temp->timestep_event_gen = 0;
-
-			network->SetNodeData(active_node_index_first, temp);
+			temp->event_response_number = 0;			
+			temp->timestep_event_gen = 0;			
 
 			for(int i=0;i<6;i++)
 			{
-				network->GetNodeData(active_node_index_first)->vecInterest.push_back(pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030));
+				temp->vecInterest.push_back(pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030));
 			}
+
+			network->SetNodeData(active_node_index_first, temp);
 
 			network->GetNodeData(active_node_index_first)->timestep_node_gen = time_step;
 			newNodeAdd_index++;
@@ -980,13 +980,14 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			network->GetNodeData(node->GetIndexOfNode())->activity = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_node_gen) * b);
 			if(network->GetNodeData(node)->event_response_number == 0)
 			{
-				network->GetNodeData(node->GetIndexOfNode())->event_flag=0;
+				network->GetNodeData(node->GetIndexOfNode())->event_flag = 0;
+				network->GetNodeData(node->GetIndexOfNode())->event_attraction = 0;
+				network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen = 0;
 			}
 			if(network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
 			{
 				network->GetNodeData(node->GetIndexOfNode())->event_response_number--;
-				network->GetNodeData(node->GetIndexOfNode())->event_attraction = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen) * y);
-			
+				network->GetNodeData(node->GetIndexOfNode())->event_attraction = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen) * y);			
 			}
 
 			if(newEventAdd_index == 0 && network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
@@ -1000,34 +1001,150 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			}
 			
 		}
-
-
+		
 
 
 		if(newNodeAdd_index == 0)
 		{
+
+			max_activity_first = network->GetNodeData(0)->activity * PearsonCoefficient(network->GetNodeData(0)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_second = network->GetNodeData(2)->activity * PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_third = network->GetNodeData(3)->activity * PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			
+			active_node_index_first = 0;
+			active_node_index_second = 2;
+			active_node_index_third = 3;
+
+			if(max_activity_second < max_activity_third)
+			{
+				term = max_activity_second;
+				max_activity_second = max_activity_third;
+				max_activity_third = term;
+
+				term_index = active_node_index_second;
+				active_node_index_second = active_node_index_third;
+				active_node_index_third = term_index;
+			}
+			if(max_activity_first < max_activity_second)
+			{
+				term = max_activity_first;
+				max_activity_first = max_activity_second;
+				max_activity_second = term;
+
+				term_index = active_node_index_first;
+				active_node_index_first = active_node_index_second;
+				active_node_index_second = term_index;
+			}
+			if(max_activity_second < max_activity_third)
+			{
+				term = max_activity_second;
+				max_activity_second = max_activity_third;
+				max_activity_third = term;
+
+				term_index = active_node_index_second;
+				active_node_index_second = active_node_index_third;
+				active_node_index_third = term_index;
+			}
+
+
+
 			for(auto node = graph->begin(); node != graph->end(); node++)
 			{
 				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
 				{
 					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-					if(active_node_index_first < (compare * network->GetNodeData(node)->activity))
+					if(max_activity_first < (compare * network->GetNodeData(node)->activity))
 					{
 						max_activity_first = compare * network->GetNodeData(node)->activity;
 						active_node_index_first = node->GetIndexOfNode();
+					}else if(max_activity_second < (compare * network->GetNodeData(node)->activity))
+					{
+						max_activity_second = compare * network->GetNodeData(node)->activity;
+						active_node_index_second = node->GetIndexOfNode();
+					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity))
+					{
+						max_activity_third = compare * network->GetNodeData(node)->activity;
+						active_node_index_third = node->GetIndexOfNode();
 					}
+
+
 				}
 			}
 
 		}
 		
+
+		if(newNodeAdd_index == 1)
+		{
+			max_activity_second = network->GetNodeData(2)->activity * PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_third = network->GetNodeData(3)->activity * PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			
+			active_node_index_second = 2;
+			active_node_index_third = 3;
+
+			if(max_activity_second < max_activity_third)
+			{
+				term = max_activity_second;
+				max_activity_second = max_activity_third;
+				max_activity_third = term;
+
+				term_index = active_node_index_second;
+				active_node_index_second = active_node_index_third;
+				active_node_index_third = term_index;
+			}
+
+			for(auto node = graph->begin(); node != graph->end(); node++)
+			{
+				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
+				{
+					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+					if(max_activity_second < (compare * network->GetNodeData(node)->activity))
+					{
+						max_activity_second = compare * network->GetNodeData(node)->activity;
+						active_node_index_second = node->GetIndexOfNode();
+					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity))
+					{
+						max_activity_third = compare * network->GetNodeData(node)->activity;
+						active_node_index_third = node->GetIndexOfNode();
+					}
+
+				}
+
+			}
+
+
+
+
+		}
+
 		
-		if(newNodeAdd_index != 0 || max_activity_first != 0)
+		if(newEventAdd_index == 1 || active_event_nodeindex != 0)
 		{
 			if(!(graph->HasEdge(active_node_index_first, active_event_nodeindex)) && active_node_index_first != active_event_nodeindex)
 			{
 				graph->AddEdge(active_node_index_first, active_event_nodeindex);
 			}
+			if(!(graph->HasEdge(active_node_index_second, active_event_nodeindex)) && active_node_index_second != active_event_nodeindex)
+			{
+				graph->AddEdge(active_node_index_second, active_event_nodeindex);
+			}
+			if(!(graph->HasEdge(active_node_index_third, active_event_nodeindex)) && active_node_index_third != active_event_nodeindex)
+			{
+				graph->AddEdge(active_node_index_third, active_event_nodeindex);
+			}
+			if(!(graph->HasEdge(active_node_index_first, active_node_index_second)) && active_node_index_first != active_node_index_second)
+			{
+				graph->AddEdge(active_node_index_first, active_node_index_second);
+			}
+			if(!(graph->HasEdge(active_node_index_first, active_node_index_third)) && active_node_index_first != active_node_index_third)
+			{
+				graph->AddEdge(active_node_index_first, active_node_index_third);
+			}
+			if(!(graph->HasEdge(active_node_index_third, active_node_index_second)) && active_node_index_third != active_node_index_second)
+			{
+				graph->AddEdge(active_node_index_third, active_node_index_second);
+			}
+
 		}
 
 		/*
@@ -1049,6 +1166,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		newEventAdd_index = 0;
 		max_event_attraction = 0;
 
+		active_event_nodeindex = 0;	
+
 		active_node_index_first = 0;
 		active_node_index_second = 0;
 		active_node_index_third = 0;
@@ -1058,6 +1177,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		max_activity_second = 0;
 		max_activity_third = 0;
 		term = 0;
+
+		compare = 0;
 
 	
 	}while(graph->GetNumberOfNodes()<numberOfNodes);
