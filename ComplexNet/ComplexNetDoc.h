@@ -36,6 +36,10 @@ typedef UGraph::pGraph (*genSmallWorldNetworkByWS)(size_t numberOfNodes, size_t 
 typedef UGraph::pGraph (*genSmallWorldNetworkByNW)(size_t numberOfNodes,size_t k,double probability);
 typedef UGraph::pGraph (*genTreeStructuredSW)(size_t numberOfNodes);
 typedef UGraph::pGraph (*genTreeStructuredSFSW)(size_t numberOfNodes);
+
+typedef UGraph::pGraph (*genRelationNetwork)(size_t numberOfNodes);
+typedef UGraph::pGraph (*genPreferenceMemoryNetwork)(size_t numberOfNodes);
+
 typedef UGraph::pGraph (*genRandomNetwork)(size_t numberOfNodes,double probability);
 typedef UGraph::pGraph (*genScaleFreeNetwork)(size_t numberOfNodes, size_t degree);
 typedef UGraph::pGraph (*genSmallWorldByEdgeIteration)(size_t times);
@@ -122,6 +126,10 @@ public:
     genSmallWorldNetworkByNW GenSmallWorldNetworkByNW;
     genTreeStructuredSW GenTreeStructuredSW;
 	genTreeStructuredSFSW GenTreeStructuredSFSW;
+
+	genRelationNetwork GenRelationNetwork;
+	genPreferenceMemoryNetwork GenPreferenceMemoryNetwork;
+
     genRandomNetwork GenRandomNetwork;
     genScaleFreeNetwork GenScaleFreeNetwork;
     genSmallWorldByEdgeIteration GenSmallWorldByEdgeIteration;

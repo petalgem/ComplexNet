@@ -78,6 +78,8 @@ BEGIN_MESSAGE_MAP(CComplexNetView, CScrollView)
 	ON_COMMAND(ID_FILE_SAVE_AS, &CComplexNetView::OnFileSaveAs)
 	ON_COMMAND(ID_FEATURE_AVEDEGREE, &CComplexNetView::OnFeatureAvedegree)
 	ON_COMMAND(ID_NET_URT, &CComplexNetView::OnNetUrt)
+	ON_COMMAND(ID_NET_RELATION, &CComplexNetView::OnNetRelation)
+	ON_COMMAND(ID_NET_PMNETWORK, &CComplexNetView::OnNetPmnetwork)
 END_MESSAGE_MAP()
 
 // CComplexNetView 构造/析构
@@ -1850,3 +1852,48 @@ void CComplexNetView::OnFileSaveAs()
 
 
 
+
+
+void CComplexNetView::OnNetRelation()
+{
+	// TODO: Add your command handler code here
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	CDeterminDlg cdd;
+	cdd.path=pDoc->CurrentWorkPath;
+	cdd.title=_T("关系网络生成");
+	cdd.flag=0;
+	if(cdd.DoModal()==IDOK)
+	{
+		//NetworkFun.dll 生成网络并存储Net、Dot、Png文件
+		UGraph::pGraph graph = pDoc->GenRelationNetwork(cdd.m_determin_iterations);
+		UNetwork<>::pNetwork tempnet(new UNetwork<>(graph));
+	    pDoc->WriteToNetFile((char *)cdd.path.GetString(),tempnet);
+		CString tempstr;
+		tempstr=cdd.path.Left(cdd.path.GetLength()-4);
+		pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
+	}
+
+}
+
+
+void CComplexNetView::OnNetPmnetwork()
+{
+	// TODO: Add your command handler code here
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	CDeterminDlg cdd;
+	cdd.path=pDoc->CurrentWorkPath;
+	cdd.title=_T("兴趣偏好记忆网络生成");
+	cdd.flag=0;
+	if(cdd.DoModal()==IDOK)
+	{
+		//NetworkFun.dll 生成网络并存储Net、Dot、Png文件
+		UGraph::pGraph graph = pDoc->GenPreferenceMemoryNetwork(cdd.m_determin_iterations);
+		UNetwork<>::pNetwork tempnet(new UNetwork<>(graph));
+	    pDoc->WriteToNetFile((char *)cdd.path.GetString(),tempnet);
+		CString tempstr;
+		tempstr=cdd.path.Left(cdd.path.GetLength()-4);
+		pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
+	}
+}

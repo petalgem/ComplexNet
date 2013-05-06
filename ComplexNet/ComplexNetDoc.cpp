@@ -64,6 +64,12 @@ CComplexNetDoc::CComplexNetDoc()
    GenTreeStructuredSW=(genTreeStructuredSW)GetProcAddress(hInstance,"GenTreeStructuredSW");
    //树状无标度小世界确定性网络生成
    GenTreeStructuredSFSW=(genTreeStructuredSFSW)GetProcAddress(hInstance,"GenTreeStructuredSFSW");
+
+
+   GenRelationNetwork=(genRelationNetwork)GetProcAddress(hInstance,"GenRelationNetwork");
+   GenPreferenceMemoryNetwork=(genPreferenceMemoryNetwork)GetProcAddress(hInstance,"GenPreferenceMemoryNetwork");
+
+
    //边迭代小世界网络生成函数
    GenSmallWorldByEdgeIteration=(genSmallWorldByEdgeIteration)GetProcAddress(hInstance,"GenSmallWorldByEdgeIteration");
    //均匀迭代树网络生成函数

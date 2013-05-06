@@ -44,6 +44,15 @@ namespace scn
    //Proposed by Zhe-Ming Lu, Yu-Xin Su and Shi-Ze Guo, published in Physica A, Vol. xx, No. xx, 201x
   //Title: Deterministic scale-free small-world network of arbitrary order 
    NETWORKLIBDLL UGraph::pGraph GenTreeStructuredSFSW(size_t numberOfNodes);
+
+
+   NETWORKLIBDLL UGraph::pGraph GenRelationNetwork(size_t numberOfNodes);
+
+   NETWORKLIBDLL UGraph::pGraph GenPreferenceMemoryNetwork(size_t numberOfNodes);
+
+   double PearsonCoefficient(vector<double> x, vector<double> y);
+
+
 /**
  * @name GenRandomNetwork - Generates ER random network
  * @param numberOfNodes - Number of number Of Nodes 

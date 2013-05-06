@@ -86,6 +86,8 @@ public:
 	afx_msg void OnFileSaveAs();
 	afx_msg void OnFeatureAvedegree();
 	afx_msg void OnNetUrt();
+	afx_msg void OnNetRelation();
+	afx_msg void OnNetPmnetwork();
 };
 
 #ifndef _DEBUG  // ComplexNetView.cpp 中的调试版本

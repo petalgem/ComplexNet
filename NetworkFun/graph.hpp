@@ -1348,8 +1348,8 @@ namespace scn //short for Su' Complex Networks
    {
    public:
       typedef std::shared_ptr<UNetwork> pNetwork;
-      typedef NodeData* pNode;
-      typedef EdgeData* pEdge;
+      typedef std::shared_ptr<NodeData> pNode;
+      typedef std::shared_ptr<EdgeData> pEdge;
    public:
 /**
  * @name UNetwork - Constructor with specified network topology. The

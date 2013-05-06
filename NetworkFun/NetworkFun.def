@@ -99,3 +99,5 @@ EXPORTS
 	GenTriangleExtendedDSWN @56
 	GenPinWheelShapedSW @57
 	GenSwirlShapedNetwork @58
+	GenRelationNetwork @59
+	GenPreferenceMemoryNetwork @60

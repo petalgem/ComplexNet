@@ -773,3 +773,329 @@ UGraph::pGraph scn::GenTreeStructuredSFSW(size_t numberOfNodes)
    }
    return graph;
 }
+
+
+
+
+
+/************************************************************************
+* Paper: A Novel Social Network Model for Forming Relationships* 
+* Author: 李辰
+* Date: 20100319
+************************************************************************/
+
+UGraph::pGraph scn::GenRelationNetwork(size_t numberOfNodes)
+{
+	//adjustment of probability
+	double probability = 0.07;
+	
+	//generate node	
+	UGraph::pGraph graph = scn::GenCommunityNetwork(5, 2, 0.65, 0.55);
+	   
+	//generate edge
+	srand(size_t(time(00)));
+	size_t index_new_node = 0;
+	size_t judge_one = 0;
+	size_t judge_two = 0;
+	
+do
+{	
+	
+	graph->AddNode();
+	index_new_node = graph->GetNumberOfNodes()-1;
+	do
+	{
+		for(auto node = graph->begin(); (node +1) != graph->end(); node++)
+		{
+			//random selection
+			if(double(rand() % RAND_MAX) / RAND_MAX < probability)
+			{	
+				graph->AddEdge(node, index_new_node);
+				judge_one++;
+							
+				for(auto second_node= node->begin(); second_node != node->end(); second_node++)
+				{
+					if((double(rand() % RAND_MAX) / RAND_MAX < probability)&&(*second_node != index_new_node))
+					{
+						graph->AddEdge(*second_node, index_new_node);
+						auto second_contact = graph->find(*second_node);
+
+						for(auto terti_node= second_contact->begin(); terti_node != second_contact->end(); terti_node++)
+						{
+							if((double(rand() % RAND_MAX) / RAND_MAX < probability)&&(*terti_node != index_new_node))
+							{
+								graph->AddEdge(*terti_node, index_new_node);
+								judge_two++;
+							}
+						}
+					}
+				}
+			}
+		
+		}
+	
+	}while(!(judge_one||judge_two));
+
+}while(graph->GetNumberOfNodes()<numberOfNodes);
+	 
+ return graph;
+}
+
+
+
+
+
+
+
+UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
+{	
+	
+	//需要设置的参数
+	double node_probability = 0.027;
+	double event_probability = 0.1458;
+	double activity_attenuation   = 0.456;
+	double attraction_attenuation = 0.123;
+	double y = -0.03;
+	double b = -0.027;
+
+	int event_response_number_init = 4;
+	
+	//变量初始化
+	
+	int active_event_nodeindex = 0;	
+	double max_event_attraction = 0;
+	int time_step = 0;
+	int newNodeAdd_index = 0;
+	int newEventAdd_index = 0;
+
+
+	int active_node_index_first = 0;
+	int active_node_index_second = 0;
+	int active_node_index_third = 0;
+	int term_index = 0;
+
+	double max_activity_first = 0;
+	double max_activity_second = 0;
+	double max_activity_third = 0;
+	double term = 0;
+
+
+	double compare = 0;
+
+	srand(size_t(time(00)));
+	
+	struct Node_Attribute
+	{
+		vector<double> vecInterest;
+		double activity;
+		double event_attraction;
+		int event_flag;
+		int event_response_number;
+		int timestep_node_gen;
+		int timestep_event_gen;
+	};
+
+	
+	UGraph::pGraph graph(new UGraph(4));
+	UNetwork<Node_Attribute>::pNetwork network(new UNetwork<Node_Attribute>(graph));
+
+	//x = pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030);
+	
+	for(auto node = graph->begin(); node != graph->end(); node++)
+	{
+		UNetwork<Node_Attribute>::pNode temp(new Node_Attribute());
+		temp->activity = 1;
+		temp->event_attraction = 0;
+		temp->event_flag = 0;
+		temp->event_response_number = 0;
+		temp->timestep_node_gen = 0;
+		temp->timestep_event_gen = 0;
+
+		for(int i=0;i<6;i++)
+		{
+			temp->vecInterest.push_back(pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030));
+		}
+		network->SetNodeData(node, temp);
+
+		if(node->GetIndexOfNode() == 1)
+		{
+			network->GetNodeData(node)->event_attraction = 1;
+			network->GetNodeData(node)->event_response_number = rand() % event_response_number_init;
+			network->GetNodeData(active_event_nodeindex)->event_flag = 1;
+		}
+
+	}
+	
+	
+	do
+	{
+		time_step++;
+		
+		//generate new event to a node with event_probability
+		if(double(rand() % RAND_MAX) / RAND_MAX < event_probability)
+		{
+			do
+			{active_event_nodeindex = rand() % (graph->GetNumberOfNodes());}
+			while(network->GetNodeData(active_event_nodeindex)->event_flag == 1);
+
+			network->GetNodeData(active_event_nodeindex)->event_flag = 1;
+			network->GetNodeData(active_event_nodeindex)->event_response_number = rand() % event_response_number_init;
+			network->GetNodeData(active_event_nodeindex)->event_attraction = 1;
+			network->GetNodeData(active_event_nodeindex)->timestep_event_gen = time_step;
+			newEventAdd_index++;
+			
+		}
+
+
+		//generate new node with node_probability
+		if(double(rand() % RAND_MAX) / RAND_MAX < node_probability)
+		{
+			graph->AddNode();
+			active_node_index_first = graph->GetNumberOfNodes()-1;
+
+			UNetwork<Node_Attribute>::pNode temp(new Node_Attribute());
+			temp->activity = 1;
+			temp->event_attraction = 0;
+			temp->event_flag = 0;
+			temp->event_response_number = 0;
+			temp->timestep_node_gen = 0;
+			temp->timestep_event_gen = 0;
+
+			network->SetNodeData(active_node_index_first, temp);
+
+			for(int i=0;i<6;i++)
+			{
+				network->GetNodeData(active_node_index_first)->vecInterest.push_back(pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030));
+			}
+
+			network->GetNodeData(active_node_index_first)->timestep_node_gen = time_step;
+			newNodeAdd_index++;
+		}
+
+
+			
+		//calculate activity of node and remaining step of event
+		for(auto node = graph->begin(); node != graph->end(); node++)
+		{
+			network->GetNodeData(node->GetIndexOfNode())->activity = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_node_gen) * b);
+			if(network->GetNodeData(node)->event_response_number == 0)
+			{
+				network->GetNodeData(node->GetIndexOfNode())->event_flag=0;
+			}
+			if(network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
+			{
+				network->GetNodeData(node->GetIndexOfNode())->event_response_number--;
+				network->GetNodeData(node->GetIndexOfNode())->event_attraction = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen) * y);
+			
+			}
+
+			if(newEventAdd_index == 0 && network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
+			{
+				if(max_event_attraction < network->GetNodeData(node->GetIndexOfNode())->event_attraction)
+				{
+					max_event_attraction = network->GetNodeData(node->GetIndexOfNode())->event_attraction;
+					active_event_nodeindex = node->GetIndexOfNode();
+				}
+
+			}
+			
+		}
+
+
+
+
+		if(newNodeAdd_index == 0)
+		{
+			for(auto node = graph->begin(); node != graph->end(); node++)
+			{
+				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
+				{
+					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+					if(active_node_index_first < (compare * network->GetNodeData(node)->activity))
+					{
+						max_activity_first = compare * network->GetNodeData(node)->activity;
+						active_node_index_first = node->GetIndexOfNode();
+					}
+				}
+			}
+
+		}
+		
+		
+		if(newNodeAdd_index != 0 || max_activity_first != 0)
+		{
+			if(!(graph->HasEdge(active_node_index_first, active_event_nodeindex)) && active_node_index_first != active_event_nodeindex)
+			{
+				graph->AddEdge(active_node_index_first, active_event_nodeindex);
+			}
+		}
+
+		/*
+		auto active_node_contact = graph->find(active_node_index);
+
+
+		for(auto node = active_node_contact->begin(); node != active_node_contact->end(); node++)
+		{
+			if( !(graph->find(*node)== active_node_contact || graph->HasEdge(*node, active_event_nodeindex)))
+			{				
+				graph->AddEdge(*node, active_event_nodeindex);
+			}
+		}
+
+		*/
+		
+		
+		newNodeAdd_index = 0;
+		newEventAdd_index = 0;
+		max_event_attraction = 0;
+
+		active_node_index_first = 0;
+		active_node_index_second = 0;
+		active_node_index_third = 0;
+		term_index = 0;
+		
+		max_activity_first = 0;
+		max_activity_second = 0;
+		max_activity_third = 0;
+		term = 0;
+
+	
+	}while(graph->GetNumberOfNodes()<numberOfNodes);
+	
+
+	return graph;
+
+
+}
+
+
+// calculate pearson correlation coefficient
+double scn::PearsonCoefficient(vector<double> x, vector<double> y)
+{
+
+	double x_ave;
+	double y_ave;
+	double R;
+	double x1,x2,x3,x4,x5,x6;
+	double y1,y2,y3,y4,y5,y6;
+
+	x_ave = (x[0]+x[1]+x[2]+x[3]+x[4]+x[5])/6;
+	y_ave = (y[0]+y[1]+y[2]+y[3]+y[4]+y[5])/6;
+	x1 = x[0]-x_ave;
+	x2 = x[1]-x_ave;
+	x3 = x[2]-x_ave;
+	x4 = x[3]-x_ave;
+	x5 = x[4]-x_ave;
+	x6 = x[5]-x_ave;
+	y1 = y[0]-y_ave;
+	y2 = y[1]-y_ave;
+	y3 = y[2]-y_ave;
+	y4 = y[3]-y_ave;
+	y5 = y[4]-y_ave;
+	y6 = y[5]-y_ave;
+	
+	R = (x1*y1+x2*y2+x3*y3+x4*y4+x5*y5+x6*y6)/(sqrt(pow(x1,2)+pow(x2,2)+pow(x3,2)+pow(x4,2)+pow(x5,2)+pow(x6,2))*sqrt(pow(y1,2)+pow(y2,2)+pow(y3,2)+pow(y4,2)+pow(y5,2)+pow(y6,2)));
+	
+	return R;
+
+}
