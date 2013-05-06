@@ -851,18 +851,18 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 {	
 	
 	//需要设置的参数
-	double node_probability = 0.127;
+	double node_probability = 0.027;
 	double event_probability = 0.0458;
-	double activity_attenuation   = 0.456;
-	double attraction_attenuation = 0.123;
-	double y = -0.03;
-	double b = -0.027;
+	double attraction_attenuation_y = -0.03;
+	double activity_attenuation_b = -0.027;
+	double degree_coefficient = 1.5;
 
-	int event_response_number_init = 4;
+	int event_response_number_init = 10;
 	
+
 	//变量初始化
 	
-	int active_event_nodeindex = 0;	
+	int active_event_nodeindex = -1;	
 	double max_event_attraction = 0;
 
 	int time_step = 0;
@@ -945,6 +945,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			
 		}
 
+		
 
 		//generate new node with node_probability
 		if(double(rand() % RAND_MAX) / RAND_MAX < node_probability)
@@ -977,7 +978,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		//calculate activity of node and remaining step of event
 		for(auto node = graph->begin(); node != graph->end(); node++)
 		{
-			network->GetNodeData(node->GetIndexOfNode())->activity = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_node_gen) * b);
+			network->GetNodeData(node->GetIndexOfNode())->activity = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_node_gen) * activity_attenuation_b);
 			if(network->GetNodeData(node)->event_response_number == 0)
 			{
 				network->GetNodeData(node->GetIndexOfNode())->event_flag = 0;
@@ -987,7 +988,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			if(network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
 			{
 				network->GetNodeData(node->GetIndexOfNode())->event_response_number--;
-				network->GetNodeData(node->GetIndexOfNode())->event_attraction = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen) * y);			
+				network->GetNodeData(node->GetIndexOfNode())->event_attraction = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen) * attraction_attenuation_y);			
 			}
 
 			if(newEventAdd_index == 0 && network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
@@ -1004,7 +1005,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		
 
 
-		if(newNodeAdd_index == 0)
+		if(newNodeAdd_index == 0 && active_event_nodeindex != -1)
 		{
 
 			max_activity_first = network->GetNodeData(0)->activity * PearsonCoefficient(network->GetNodeData(0)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
@@ -1050,20 +1051,21 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 
 			for(auto node = graph->begin(); node != graph->end(); node++)
 			{
+				
 				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
 				{
 					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-					if(max_activity_first < (compare * network->GetNodeData(node)->activity))
+					if(max_activity_first < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_first = compare * network->GetNodeData(node)->activity;
+						max_activity_first = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_first = node->GetIndexOfNode();
-					}else if(max_activity_second < (compare * network->GetNodeData(node)->activity))
+					}else if(max_activity_second < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_second = compare * network->GetNodeData(node)->activity;
+						max_activity_second = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_second = node->GetIndexOfNode();
-					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity))
+					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_third = compare * network->GetNodeData(node)->activity;
+						max_activity_third = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_third = node->GetIndexOfNode();
 					}
 
@@ -1074,7 +1076,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		}
 		
 
-		if(newNodeAdd_index == 1)
+		if(newNodeAdd_index == 1 && active_event_nodeindex != -1)
 		{
 			max_activity_second = network->GetNodeData(2)->activity * PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
 			max_activity_third = network->GetNodeData(3)->activity * PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
@@ -1098,13 +1100,13 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
 				{
 					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-					if(max_activity_second < (compare * network->GetNodeData(node)->activity))
+					if(max_activity_second < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_second = compare * network->GetNodeData(node)->activity;
+						max_activity_second = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_second = node->GetIndexOfNode();
-					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity))
+					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_third = compare * network->GetNodeData(node)->activity;
+						max_activity_third = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_third = node->GetIndexOfNode();
 					}
 
@@ -1118,7 +1120,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		}
 
 		
-		if(newEventAdd_index == 1 || active_event_nodeindex != 0)
+		if(newEventAdd_index == 1 || active_event_nodeindex != -1)
 		{
 			if(!(graph->HasEdge(active_node_index_first, active_event_nodeindex)) && active_node_index_first != active_event_nodeindex)
 			{
@@ -1166,7 +1168,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		newEventAdd_index = 0;
 		max_event_attraction = 0;
 
-		active_event_nodeindex = 0;	
+		active_event_nodeindex = -1;	
 
 		active_node_index_first = 0;
 		active_node_index_second = 0;
