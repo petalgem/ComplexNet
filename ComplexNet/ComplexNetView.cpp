@@ -80,6 +80,7 @@ BEGIN_MESSAGE_MAP(CComplexNetView, CScrollView)
 	ON_COMMAND(ID_NET_URT, &CComplexNetView::OnNetUrt)
 	ON_COMMAND(ID_NET_RELATION, &CComplexNetView::OnNetRelation)
 	ON_COMMAND(ID_NET_PMNETWORK, &CComplexNetView::OnNetPmnetwork)
+	ON_COMMAND(ID_GROUP_SPECTRUM, &CComplexNetView::OnGroupSpectrum)
 END_MESSAGE_MAP()
 
 // CComplexNetView 构造/析构
@@ -1776,6 +1777,27 @@ void CComplexNetView::OnBoxCounting()
 	Invalidate(FALSE);
 }
 
+
+void CComplexNetView::OnGroupSpectrum()
+{
+	// TODO: Add your command handler code here
+
+
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	char temp[256];
+	if(pDoc->NetTxtFileOpened==FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+	sprintf_s(temp,"%s     %.6f\r\n","Average Degree=",pDoc->RenormalizeBySpectralBisection(pDoc->unet->GetTopology(),3));
+    MessageBox(temp);
+
+}
+
+
+
 //生成社团网络，函数GenCommunityNetwork来自NetworkFun.dll
 void CComplexNetView::OnGroupnetSimple()
 {
@@ -1897,3 +1919,6 @@ void CComplexNetView::OnNetPmnetwork()
 		pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
 	}
 }
+
+
+

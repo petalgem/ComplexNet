@@ -36,6 +36,9 @@ EXPORTS
     ;CalculateHistogramLongint @35
     ;CalculateHistogramInt @36
     ;CalculateHistogramChar @37
+
+	;RenormalizeBySpectralBisection @38
+
     ;CalculateNodeStrengths @4
 	;CalculateNetworkStrengthDistribution @5
 	
@@ -101,3 +104,5 @@ EXPORTS
 	GenSwirlShapedNetwork @58
 	GenRelationNetwork @59
 	GenPreferenceMemoryNetwork @60
+
+	RenormalizeBySpectralBisection @61

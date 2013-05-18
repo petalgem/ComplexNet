@@ -89,6 +89,9 @@ CComplexNetDoc::CComplexNetDoc()
    IsDegreeListGraphical=(isDegreeListGraphical)GetProcAddress(hInstance,"IsDegreeListGraphical");
    //盒计数法聚类
    RenormalizeByBoxCounting=(renormalizeByBoxCounting)GetProcAddress(hInstance,"RenormalizeByBoxCounting");
+   
+   RenormalizeBySpectralBisection=(renormalizeBySpectralBisection)GetProcAddress(hInstance,"RenormalizeBySpectralBisection");
+   
    //计算平均度
    ComputeAverageDegree=(computeAverageDegree)GetProcAddress(hInstance,"ComputeAverageDegree");
    //计算谱
@@ -153,7 +156,7 @@ CComplexNetDoc::CComplexNetDoc()
 
    //生成NetFiles和Results目录++++++++++++开始
    NetFileTitle="";
-   CFileFind a;
+   CFileFind a; 
    CString b=CurrentWorkPath;
    b+="//NetFiles//*.*";
    BOOL c;

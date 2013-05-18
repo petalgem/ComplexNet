@@ -53,6 +53,9 @@ typedef UGraph::pGraph (*genCommunityNetwork)(size_t numberOfNodes, size_t numbe
 typedef void (*genNetworkFromDegreeDistribution)(pUGraphList &list,std::unordered_map<size_t,size_t> &degree_list);
 typedef bool (*isDegreeListGraphical)(std::unordered_map<size_t,size_t> &degree_distribution);
 typedef UGraph::pGraph (*renormalizeByBoxCounting)(UGraph::pGraph graph, size_t length);
+
+typedef double (*renormalizeBySpectralBisection)(UGraph::pGraph graph, size_t length);
+
 typedef double (*computeAverageDegree)(UGraph::pGraph graph);
 typedef valarray<double> (*computeSpectrum)(UGraph::pGraph graph);
 typedef void (*getLambda2AndRatio)(double &lambda2, double &ratio,UGraph::pGraph graph);
@@ -143,6 +146,9 @@ public:
     genNetworkFromDegreeDistribution GenNetworkFromDegreeDistribution;
     isDegreeListGraphical IsDegreeListGraphical;
     renormalizeByBoxCounting RenormalizeByBoxCounting;
+
+	renormalizeBySpectralBisection RenormalizeBySpectralBisection;
+
     computeAverageDegree ComputeAverageDegree;
     computeSpectrum ComputeSpectrum;
     getLambda2AndRatio GetLambda2AndRatio;

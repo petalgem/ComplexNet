@@ -361,6 +361,7 @@ UGraph::pGraph scn::GenSmallWorldByEdgeIteration(size_t times)
    list<pair<size_t, size_t>> previous_new_edges;
    //time 0
    for(size_t i = 0; i < 3; i++)
+
    {
       graph->AddNode(i);
    }
@@ -675,6 +676,18 @@ UGraph::pGraph scn::RenormalizeByBoxCounting(UGraph::pGraph graph, size_t length
    return temp_graph;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 UGraph::pGraph scn::GenTreeStructuredSW(size_t times)
 {
    UGraph::pGraph graph(new UGraph());
@@ -843,10 +856,94 @@ do
 
 
 
+/************************************************************************
+* calculate the society characteristic - Spectral bisection method
+* Author: 李辰
+* Date: 20100513
+************************************************************************/
+
+double scn::RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length)
+{
+	
+	UGraph::pGraph temp_graph(new UGraph(*graph));
+	UNetwork<int>::pNetwork temp_network(new UNetwork<int>(temp_graph));
+	UNetwork<int>::pNode temp;
+	
+	
+	double eigenvalue_min_first = 0;
+	double eigenvalue_min_second = 0;
+	int min_second_index = 0;
+	int sizeofgraph = temp_graph->GetNumberOfNodes();
+
+	int group_flag_A = 1;
+	int group_flag_B = 2;
+
+	double Q = 0;
+	
+	auto eigenvalue_list = graph->GetLaplacianMatrix().GetEigenvalueList();
+
+    #undef min
+	eigenvalue_min_first = eigenvalue_list.min();
+	eigenvalue_min_second = eigenvalue_list[0];
+	if(eigenvalue_min_first == eigenvalue_min_second)
+	{eigenvalue_min_second = eigenvalue_list[1];}
+	min_second_index = 0;
+
+	for(int i = 1; i < sizeofgraph; i++)
+	{
+		if(eigenvalue_list[i] != eigenvalue_min_first)
+		{
+			eigenvalue_min_second > eigenvalue_list[i];
+			eigenvalue_min_second = eigenvalue_list[i];
+			min_second_index = i;
+		}
+
+	}
+
+	auto result = temp_graph->GetLaplacianMatrix().GetEigenValueAndVector();
+
+	for(auto node = graph->begin(); node != graph->end(); node++)
+	{
+		if(result[min_second_index].second[node->GetIndexOfNode()] > 0)
+		{
+			temp.reset(new int(group_flag_A));
+			temp_network->SetNodeData(node,  temp);		
+		}else if(result[min_second_index].second[node->GetIndexOfNode()] < 0)
+		{
+			temp.reset(new int(group_flag_B));
+			temp_network->SetNodeData(node,  temp);		
+		}
+	}
+
+	for(auto node_first = graph->begin(); node_first != graph->end(); node_first++)
+	{
+		for(auto node_second = graph->begin(); node_second != graph->end(); node_second++)
+		{
+			if(temp_network->GetNodeData(node_first->GetIndexOfNode()) == temp_network->GetNodeData(node_second->GetIndexOfNode()))
+			{
+				if(graph->HasEdge(node_first, node_second))
+				{
+					Q = Q + (1 - (node_first->GetDegree())*(node_second->GetDegree())/(2 * graph->GetNumberOfEdges()));
+				}
+				else if(!(graph->HasEdge(node_first, node_second)))
+				{
+					Q = Q - (node_first->GetDegree())*(node_second->GetDegree())/(2 * graph->GetNumberOfEdges());
+				}
+
+			}
+
+		}
+
+	}
+
+	Q = Q / (2 * graph->GetNumberOfEdges());
 
 
+   return Q;
+}
 
 
+	
 UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 {	
 	
@@ -855,9 +952,10 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	double event_probability = 0.0458;
 	double attraction_attenuation_y = -0.03;
 	double activity_attenuation_b = -0.027;
-	double degree_coefficient = 1.5;
+	double degree_coefficient = 0.75;
 
 	int event_response_number_init = 10;
+
 	
 
 	//变量初始化
@@ -895,6 +993,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		int event_flag;
 		int event_response_number;
 		int timestep_event_gen;
+
+		int group_number;
 	};
 	
 	UGraph::pGraph graph(new UGraph(4));
@@ -909,6 +1009,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		temp->event_response_number = 0;
 		temp->timestep_node_gen = 0;
 		temp->timestep_event_gen = 0;
+		
 
 		for(int i=0;i<6;i++)
 		{
@@ -960,7 +1061,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			temp->event_attraction = 0;
 			temp->event_flag = 0;
 			temp->event_response_number = 0;			
-			temp->timestep_event_gen = 0;			
+			temp->timestep_event_gen = 0;
+
 
 			for(int i=0;i<6;i++)
 			{

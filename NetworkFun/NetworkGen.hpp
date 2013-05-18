@@ -150,6 +150,12 @@ namespace scn
  */
    NETWORKLIBDLL UGraph::pGraph RenormalizeByBoxCounting(UGraph::pGraph graph, size_t length);
 
+
+   NETWORKLIBDLL double RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length);
+
+
+
+
  /**
  * @name WriteToNetFile - write a given undirected network to a .net file
  * @param path -  the given file path
