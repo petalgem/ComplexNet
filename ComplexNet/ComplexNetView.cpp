@@ -81,6 +81,7 @@ BEGIN_MESSAGE_MAP(CComplexNetView, CScrollView)
 	ON_COMMAND(ID_NET_RELATION, &CComplexNetView::OnNetRelation)
 	ON_COMMAND(ID_NET_PMNETWORK, &CComplexNetView::OnNetPmnetwork)
 	ON_COMMAND(ID_GROUP_SPECTRUM, &CComplexNetView::OnGroupSpectrum)
+	ON_COMMAND(ID_GROUP_GN, &CComplexNetView::OnGroupGn)
 END_MESSAGE_MAP()
 
 // CComplexNetView 构造/析构
@@ -1781,8 +1782,6 @@ void CComplexNetView::OnBoxCounting()
 void CComplexNetView::OnGroupSpectrum()
 {
 	// TODO: Add your command handler code here
-
-
 	CComplexNetDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	char temp[256];
@@ -1794,6 +1793,23 @@ void CComplexNetView::OnGroupSpectrum()
 	sprintf_s(temp,"%s     %.6f\r\n","Average Degree=",pDoc->RenormalizeBySpectralBisection(pDoc->unet->GetTopology(),3));
     MessageBox(temp);
 
+}
+
+
+void CComplexNetView::OnGroupGn()
+{
+	// TODO: Add your command handler code here
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	char temp[256];
+	if(pDoc->NetTxtFileOpened==FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+	vector< vector<size_t>> CmtyV;
+	sprintf_s(temp,"%s     %.6f\r\n","Average Degree=",pDoc->CommunityGirvanNewman(pDoc->unet->GetTopology(),CmtyV));
+    MessageBox(temp);
 }
 
 
@@ -1844,6 +1860,10 @@ void CComplexNetView::OnFileSave()
 	pDoc->DrawCircleForm(pDoc->unet->GetTopology(),tempstr.GetString());
 	Invalidate(FALSE);
 }
+
+
+
+
 
 //文件另存Net,dot,Png三种格式
 void CComplexNetView::OnFileSaveAs()
@@ -1919,6 +1939,8 @@ void CComplexNetView::OnNetPmnetwork()
 		pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
 	}
 }
+
+
 
 
 

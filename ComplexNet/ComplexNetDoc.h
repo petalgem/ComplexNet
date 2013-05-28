@@ -40,6 +40,10 @@ typedef UGraph::pGraph (*genTreeStructuredSFSW)(size_t numberOfNodes);
 typedef UGraph::pGraph (*genRelationNetwork)(size_t numberOfNodes);
 typedef UGraph::pGraph (*genPreferenceMemoryNetwork)(size_t numberOfNodes);
 
+
+typedef double (*communityGirvanNewman)(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV);
+
+
 typedef UGraph::pGraph (*genRandomNetwork)(size_t numberOfNodes,double probability);
 typedef UGraph::pGraph (*genScaleFreeNetwork)(size_t numberOfNodes, size_t degree);
 typedef UGraph::pGraph (*genSmallWorldByEdgeIteration)(size_t times);
@@ -132,6 +136,10 @@ public:
 
 	genRelationNetwork GenRelationNetwork;
 	genPreferenceMemoryNetwork GenPreferenceMemoryNetwork;
+
+	communityGirvanNewman CommunityGirvanNewman;
+
+
 
     genRandomNetwork GenRandomNetwork;
     genScaleFreeNetwork GenScaleFreeNetwork;

@@ -946,11 +946,8 @@ double scn::RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length)
 		}
 
 	}
-
-	Q = Q / (2 * graph->GetNumberOfEdges());   
-
-
-   return Q;
+	Q = Q / (2 * graph->GetNumberOfEdges());
+	return Q;
 }
 
 
@@ -961,7 +958,7 @@ double scn::RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length)
 * Date: 20100523
 ************************************************************************/
 
-void GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
+void scn::GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 {
 	vector<size_t> VisitedNId(graph->GetNumberOfNodes()+1);
 	queue<size_t> NIdQ;
@@ -1004,7 +1001,7 @@ void GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 			CnComV.push_back(CcNIdV);
 		}
 	}
-	sort(CnComV.begin(),CnComV.end(),greater<size_t>());
+	sort(CnComV.begin(),CnComV.end());
 }
 
 
@@ -1016,13 +1013,13 @@ void GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 //	4. Steps 2 and 3 are repeated until no edges remain.
 //  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
 // Keep removing edges from Graph until one of the connected components of Graph splits into two.
-void CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<size_t>& Cmty2) {
+void scn::CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<size_t>& Cmty2) {
 	
     vector< pair<pair<size_t, size_t>, double>> BtwEH;  
 	Cmty1.clear();  Cmty2.clear();
 	while (true) {
     GetBetweennessCentralityOfEdge(graph, BtwEH);
-	BtwEH.sort(BtwEH.begin(), BtwEH.end(), [&](const pair<pair<size_t, size_t>, double> &one, 
+	sort(BtwEH.begin(), BtwEH.end(), [&](const pair<pair<size_t, size_t>, double> &one, 
 					const pair<pair<size_t, size_t>, double> &two)->bool
 	{
 		return one.second > two.second;
@@ -1044,7 +1041,7 @@ void CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<s
 
 void scn::GetBetweennessCentralityOfEdge(UGraph::pGraph& graph, vector< pair<pair<size_t, size_t>, double>> BtwEH)
 {
-    vector< pair<pair<size_t, size_t>, double>> BtwEH;
+
 	double sum = 0;
 	pair<size_t, size_t> edge; 
 	for(auto node1 = graph->begin(); node1 != graph->end(); node1++)
@@ -1141,7 +1138,7 @@ pair<size_t, size_t> scn::GetNumberOfShortestPathEdge(UGraph::pGraph graph,size_
 
 
 
-void GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& CnCom){
+void scn::GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& CnCom){
 	
 	vector<size_t> VisitedNId(graph->GetNumberOfNodes()+1);
 	queue<size_t> NIdQ;
@@ -1168,7 +1165,7 @@ void GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& CnCom)
 
 // Connected components of a graph define clusters
 // OutDegH and OrigEdges stores node degrees and number of edges in the original graph
-double _GirvanNewmanGetModularity(UGraph::pGraph& G, const unordered_map<size_t, size_t> OutDegH, const int& OrigEdges, vector< vector<size_t>>& CnComV){	
+double scn::GirvanNewmanGetModularity(UGraph::pGraph& G, unordered_map<size_t, size_t> OutDegH, const int& OrigEdges, vector< vector<size_t>>& CnComV){	
 	GetWccs(G, CnComV);// get communities
 	double Mod = 0;
 	for (int c = 0; c < CnComV.size(); c++) {
@@ -1189,7 +1186,7 @@ double _GirvanNewmanGetModularity(UGraph::pGraph& G, const unordered_map<size_t,
 
 // Maximum modularity clustering by Girvan-Newman algorithm (slow)
 //  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
-double CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV) { 
+double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV) { 
   std::unordered_map<size_t, size_t> OutDegH;
   const size_t NEdges = graph->GetNumberOfEdges();
   for (auto node = graph->begin(); node != graph->end(); node++) {
@@ -1202,17 +1199,17 @@ double CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& Cmt
   vector<size_t> Cmty1, Cmty2;
   while (true) {
     CmtyGirvanNewmanStep(graph, Cmty1, Cmty2);
-    const double Q = _GirvanNewmanGetModularity(graph, OutDegH, NEdges, CurCmtyV);
+    const double Q = GirvanNewmanGetModularity(graph, OutDegH, NEdges, CurCmtyV);
     //printf("current modularity: %f\n", Q);
     if (Q > BestQ) {
       BestQ = Q; 
-
 	  temp = CmtyV;
 	  CmtyV = CurCmtyV; 
 	  CurCmtyV = temp;
     }
 	if (Cmty1.size() == 0 || Cmty2.size() == 0) { break; }
   }
+
   return BestQ;
 }
 

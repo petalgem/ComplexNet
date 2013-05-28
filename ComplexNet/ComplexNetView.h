@@ -89,6 +89,7 @@ public:
 	afx_msg void OnNetRelation();
 	afx_msg void OnNetPmnetwork();
 	afx_msg void OnGroupSpectrum();
+	afx_msg void OnGroupGn();
 };
 
 #ifndef _DEBUG  // ComplexNetView.cpp 中的调试版本

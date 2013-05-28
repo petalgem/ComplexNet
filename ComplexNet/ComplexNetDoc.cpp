@@ -69,6 +69,7 @@ CComplexNetDoc::CComplexNetDoc()
    GenRelationNetwork=(genRelationNetwork)GetProcAddress(hInstance,"GenRelationNetwork");
    GenPreferenceMemoryNetwork=(genPreferenceMemoryNetwork)GetProcAddress(hInstance,"GenPreferenceMemoryNetwork");
 
+   CommunityGirvanNewman=(communityGirvanNewman)GetProcAddress(hInstance,"CommunityGirvanNewman");
 
    //边迭代小世界网络生成函数
    GenSmallWorldByEdgeIteration=(genSmallWorldByEdgeIteration)GetProcAddress(hInstance,"GenSmallWorldByEdgeIteration");

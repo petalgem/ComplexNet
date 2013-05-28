@@ -38,6 +38,7 @@ EXPORTS
     ;CalculateHistogramChar @37
 
 	;RenormalizeBySpectralBisection @38
+	CommunityGirvanNewman @39
 
     ;CalculateNodeStrengths @4
 	;CalculateNetworkStrengthDistribution @5
@@ -106,3 +107,5 @@ EXPORTS
 	GenPreferenceMemoryNetwork @60
 
 	RenormalizeBySpectralBisection @61
+
+	CommunityGirvanNewman @62
