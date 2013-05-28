@@ -1,0 +1,59 @@
+﻿Build started 2013/5/18 20:45:26.
+     1>Project "C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\ComplexNet.vcxproj" on node 3 (rebuild target(s)).
+     1>PrepareForBuild:
+         Creating directory "C:\Users\123\Documents\GitHub\ComplexNet\Intel_SSA\".
+       InitializeBuildStatus:
+         Creating "Intel_SSA\ComplexNet.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       MessageBuildingWithCompiler:
+         Building with Intel(R) C++ Compiler XE 13.0
+       ClCompile:
+         ***** ClCompile (Win32 - Intel C++)
+         C:\Program Files (x86)\Intel\Composer XE 2013\bin\ia32\icl.exe /c /Qvc10 /Qlocation,link,"$(VCInstallDir)\bin" /ZI /nologo /W3 /Od /Qftz- /D __INTEL_COMPILER=1300 /D WIN32 /D _WINDOWS /D _DEBUG /D _ATL_DLL /D _AFXDLL /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yc"StdAfx.h" /Fp"Intel_SSA\ComplexNet.pch" /Fo"Intel_SSA\\" /Fd"Intel_SSA\vc100.pdb" /Qdiag-enable:sc3 /Qdiag-enable:sc-full /Gd /TP stdafx.cpp /I"C:\Program Files (x86)\Intel\Composer XE 2013\mkl\include" /I"C:\Program Files (x86)\Intel\Composer XE 2013\mkl\include\fftw" /I"C:\Program Files (x86)\Intel\Composer XE 2013\mkl\include\ia32" 
+         stdafx.cpp
+         C:\Program Files (x86)\Intel\Composer XE 2013\bin\ia32\icl.exe /c /Qvc10 /Qlocation,link,"$(VCInstallDir)\bin" /ZI /nologo /W3 /Od /Qftz- /D __INTEL_COMPILER=1300 /D WIN32 /D _WINDOWS /D _DEBUG /D _ATL_DLL /D _AFXDLL /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"StdAfx.h" /Fp"Intel_SSA\ComplexNet.pch" /Fo"Intel_SSA\\" /Fd"Intel_SSA\vc100.pdb" /Qdiag-enable:sc3 /Qdiag-enable:sc-full /Gd /TP BAModelDlg.cpp ComplexNet.cpp ComplexNetDoc.cpp ComplexNetView.cpp DeterminDlg.cpp DialogDrawCurve.cpp DlgCommuNumSet.cpp DlgExampleNets.cpp DrawCurve.cpp GroupNetDlg.cpp MainFrm.cpp NetFileSaveAs.cpp NWSmallDlg.cpp RandomDlg.cpp RegularDlg.cpp WSSmallDlg.cpp /I"C:\Program Files (x86)\Intel\Composer XE 2013\mkl\include" /I"C:\Program Files (x86)\Intel\Composer XE 2013\mkl\include\fftw" /I"C:\Program Files (x86)\Intel\Composer XE 2013\mkl\include\ia32" 
+         BAModelDlg.cpp
+         ComplexNet.cpp
+     1>C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\graph.hpp(404): error : identifier "dsyevr_" is undefined
+              dsyevr_(&jobz, &range, &uplo, &n, data.data(), &lda, &vl, &vu, &il, &iu, &abstol,
+              ^
+         
+     1>C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\graph.hpp(459): error : identifier "dsyevr_" is undefined
+              dsyevr_(&jobz, &range, &uplo, &n, data.data(), &lda, &vl, &vu, &il, &iu, &abstol,
+              ^
+         
+         ComplexNetDoc.cpp
+     1>C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\graph.hpp(404): error : identifier "dsyevr_" is undefined
+              dsyevr_(&jobz, &range, &uplo, &n, data.data(), &lda, &vl, &vu, &il, &iu, &abstol,
+              ^
+         
+     1>C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\graph.hpp(459): error : identifier "dsyevr_" is undefined
+              dsyevr_(&jobz, &range, &uplo, &n, data.data(), &lda, &vl, &vu, &il, &iu, &abstol,
+              ^
+         
+         ComplexNetView.cpp
+     1>C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\graph.hpp(404): error : identifier "dsyevr_" is undefined
+              dsyevr_(&jobz, &range, &uplo, &n, data.data(), &lda, &vl, &vu, &il, &iu, &abstol,
+              ^
+         
+     1>C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\graph.hpp(459): error : identifier "dsyevr_" is undefined
+              dsyevr_(&jobz, &range, &uplo, &n, data.data(), &lda, &vl, &vu, &il, &iu, &abstol,
+              ^
+         
+         DeterminDlg.cpp
+         DialogDrawCurve.cpp
+         DlgCommuNumSet.cpp
+         DlgExampleNets.cpp
+         DrawCurve.cpp
+         GroupNetDlg.cpp
+         MainFrm.cpp
+         NetFileSaveAs.cpp
+         NWSmallDlg.cpp
+         RandomDlg.cpp
+         RegularDlg.cpp
+         WSSmallDlg.cpp
+     1>icl : warning #10281: Static analysis was not performed because of compilation errors
+     1>Done Building Project "C:\Users\123\Documents\GitHub\ComplexNet\ComplexNet\ComplexNet.vcxproj" (rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:13.98

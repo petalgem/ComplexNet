@@ -713,7 +713,7 @@ pair<size_t, size_t> scn::GetNumberOfShortestPath(UGraph::pGraph graph,size_t in
       while(!path.empty())
       {
 	 auto current = path.front();
-	 if(current.first == indexOfThrough)
+	 if(current.first == indexOfThrough) 
 	    current.second = true;
 	 
 	 if(indexOfSource == current.first)

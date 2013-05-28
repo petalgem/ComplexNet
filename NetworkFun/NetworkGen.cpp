@@ -28,9 +28,9 @@ void scn::WriteToNetFile(char* path, UNetwork<>::pNetwork &network)
       //write node
       for(auto node = graph->begin(); node != graph->end(); node++)
       {
-	 auto position = network->GetNodePosition(*node);
-	 outfile<<*node + 1<<" "<<*node + 1<<" "<<position[0]<<" "
-		<<position[1]<<" "<<position[2]<<endl;
+		  auto position = network->GetNodePosition(*node);
+		  outfile<<*node + 1<<" "<<*node + 1<<" "<<position[0]<<" "
+			  <<position[1]<<" "<<position[2]<<endl;
       }
       
       outfile<<"*Arcs"<<endl;
@@ -680,14 +680,6 @@ UGraph::pGraph scn::RenormalizeByBoxCounting(UGraph::pGraph graph, size_t length
 
 
 
-
-
-
-
-
-
-
-
 UGraph::pGraph scn::GenTreeStructuredSW(size_t times)
 {
    UGraph::pGraph graph(new UGraph());
@@ -870,50 +862,69 @@ double scn::RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length)
 	UNetwork<int>::pNode temp;
 	
 	
-	double eigenvalue_min_first = 0;
-	double eigenvalue_min_second = 0;
+	double eigenvalue_min_first = 0.1;
+	double eigenvalue_min_second = 0.1;
 	int min_second_index = 0;
 	int sizeofgraph = temp_graph->GetNumberOfNodes();
 
 	int group_flag_A = 1;
 	int group_flag_B = 2;
+	int i = 0;
 
-	double Q = 0;
+	double Q = 0;	
+	auto eigenvalue_list = abs(graph->GetLaplacianMatrix().GetEigenvalueList());
+	//for(size_t i = 0; i < eigenvalue_list.size(); i++)
+	//{
+	//	TRACE("%f\n", eigenvalue_list[i]); 
+	//}
+
+    //#undef max
+	//eigenvalue_min_first = eigenvalue_list.max();
 	
-	auto eigenvalue_list = graph->GetLaplacianMatrix().GetEigenvalueList();
-
-    #undef min
-	eigenvalue_min_first = eigenvalue_list.min();
 	eigenvalue_min_second = eigenvalue_list[0];
-	if(eigenvalue_min_first == eigenvalue_min_second)
-	{eigenvalue_min_second = eigenvalue_list[1];}
 	min_second_index = 0;
-
-	for(int i = 1; i < sizeofgraph; i++)
+	
+	while(eigenvalue_min_second == 0 && i < ( sizeofgraph - 1))
 	{
-		if(eigenvalue_list[i] != eigenvalue_min_first)
+		i++;
+		eigenvalue_min_second = eigenvalue_list[i];
+		min_second_index = i;
+
+	}
+	
+	
+	for(int j = 0; j < sizeofgraph; j++)
+	{
+		if(eigenvalue_list[j] != 0 && eigenvalue_min_second > eigenvalue_list[j])
 		{
-			eigenvalue_min_second > eigenvalue_list[i];
-			eigenvalue_min_second = eigenvalue_list[i];
-			min_second_index = i;
+			eigenvalue_min_second = eigenvalue_list[j];
+			min_second_index = j;
 		}
 
 	}
-
+	
+	
+	
 	auto result = temp_graph->GetLaplacianMatrix().GetEigenValueAndVector();
+
 
 	for(auto node = graph->begin(); node != graph->end(); node++)
 	{
-		if(result[min_second_index].second[node->GetIndexOfNode()] > 0)
+		if(result[71].second[node->GetIndexOfNode()] > 0)
 		{
 			temp.reset(new int(group_flag_A));
-			temp_network->SetNodeData(node,  temp);		
-		}else if(result[min_second_index].second[node->GetIndexOfNode()] < 0)
+			temp_network->SetNodeData(node,  temp);	
+			
+			
+		}else if(result[71].second[node->GetIndexOfNode()] < 0)
 		{
 			temp.reset(new int(group_flag_B));
-			temp_network->SetNodeData(node,  temp);		
+			temp_network->SetNodeData(node,  temp);	
+			
 		}
 	}
+
+	
 
 	for(auto node_first = graph->begin(); node_first != graph->end(); node_first++)
 	{
@@ -936,11 +947,275 @@ double scn::RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length)
 
 	}
 
-	Q = Q / (2 * graph->GetNumberOfEdges());
+	Q = Q / (2 * graph->GetNumberOfEdges());   
 
 
    return Q;
 }
+
+
+
+/************************************************************************
+* calculate the society characteristic - Girvan-Newman method
+* Author: 李辰
+* Date: 20100523
+************************************************************************/
+
+void GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
+{
+	vector<size_t> VisitedNId(graph->GetNumberOfNodes()+1);
+	queue<size_t> NIdQ;
+	vector<size_t> CcNIdV(1);
+	CnComV.clear();
+	vector<size_t>::iterator result, result_neighbor;
+
+	// zero degree nodes
+	for(auto node_degreecheck = graph->begin(); node_degreecheck != graph->end(); node_degreecheck++){
+		if(node_degreecheck->GetDegree() == 0){
+			const size_t NId = node_degreecheck->GetIndexOfNode();
+			VisitedNId.push_back(NId);
+			CcNIdV[0] = NId; CnComV.push_back(CcNIdV);
+		}
+	}
+	// the rest of the nodes
+	for(auto node_restcheck = graph->begin(); node_restcheck != graph->end(); node_restcheck++){
+		const size_t NId = node_restcheck->GetIndexOfNode();
+		result = find( VisitedNId.begin(), VisitedNId.end(), NId );
+		if( result != VisitedNId.end()){
+			VisitedNId.push_back(NId);
+			NIdQ.push(NId);
+			CcNIdV.clear();
+			CcNIdV.push_back(NId);
+
+			while( ! NIdQ.empty()){
+				auto node = graph->find(NIdQ.front()); NIdQ.pop();
+
+				for(auto neighbNode = node->begin(); neighbNode != node->end(); neighbNode++){
+					const size_t NId_neighbor = (*neighbNode);
+					result_neighbor = find(VisitedNId.begin(),VisitedNId.end(),NId_neighbor);
+					if( result_neighbor != VisitedNId.end()){
+						NIdQ.push(NId_neighbor); 
+						VisitedNId.push_back(NId_neighbor);
+						CcNIdV.push_back(NId_neighbor);
+					}
+				}
+			}
+			sort(CcNIdV.begin(),CcNIdV.end());
+			CnComV.push_back(CcNIdV);
+		}
+	}
+	sort(CnComV.begin(),CnComV.end(),greater<size_t>());
+}
+
+
+
+// GIRVAN-NEWMAN algorithm
+//	1. The betweenness of all existing edges in the network is calculated first.
+//	2. The edge with the highest betweenness is removed.
+//	3. The betweenness of all edges affected by the removal is recalculated.
+//	4. Steps 2 and 3 are repeated until no edges remain.
+//  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
+// Keep removing edges from Graph until one of the connected components of Graph splits into two.
+void CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<size_t>& Cmty2) {
+	
+    vector< pair<pair<size_t, size_t>, double>> BtwEH;  
+	Cmty1.clear();  Cmty2.clear();
+	while (true) {
+    GetBetweennessCentralityOfEdge(graph, BtwEH);
+	BtwEH.sort(BtwEH.begin(), BtwEH.end(), [&](const pair<pair<size_t, size_t>, double> &one, 
+					const pair<pair<size_t, size_t>, double> &two)->bool
+	{
+		return one.second > two.second;
+	});
+
+	if (BtwEH.empty()) { return; }
+	const size_t NId1 = BtwEH[0].first.first;
+    const size_t NId2 = BtwEH[0].first.second;
+    graph->RemoveEdge(NId1, NId2);
+    if (GetShortestDistance(graph, NId1, NId2) == -1) { // two components
+      GetNodeWcc(graph, NId1, Cmty1);
+      GetNodeWcc(graph, NId2, Cmty2);
+      return;
+    }
+  }
+}
+
+
+
+void scn::GetBetweennessCentralityOfEdge(UGraph::pGraph& graph, vector< pair<pair<size_t, size_t>, double>> BtwEH)
+{
+    vector< pair<pair<size_t, size_t>, double>> BtwEH;
+	double sum = 0;
+	pair<size_t, size_t> edge; 
+	for(auto node1 = graph->begin(); node1 != graph->end(); node1++)
+	{
+		for(auto node2 = graph->begin(); node2 != graph->end() && (*node1 > *node2); node2++)
+		{
+			if(graph->HasEdge(node1, node2))
+			{
+				for(auto node3 = graph->begin(); node3 != graph->end(); node3++)
+				{
+					if(*node3 == *node1 || *node3 == *node2)
+						continue;
+					for(auto node4 = graph->begin(); node4 != graph->end() && (*node3 > *node4); node4++)
+					{
+						if(*node4 == *node1 || *node4 == *node2 )
+							continue;
+						//compute
+						auto result = GetNumberOfShortestPathEdge(graph,*node3, *node4, *node1, *node2);
+						sum += static_cast<double>(result.second) / 
+							static_cast<double>(result.first);
+					}				
+				}
+				BtwEH.push_back(make_pair(make_pair(*node1, *node2), sum));
+				sum = 0;			
+			}
+		}
+	}
+}
+
+
+
+pair<size_t, size_t> scn::GetNumberOfShortestPathEdge(UGraph::pGraph graph,size_t indexOfSource, size_t indexOfTarget,
+							 size_t indexOfThrough_A, size_t indexOfThrough_B)
+{
+	assert(graph->HasNode(indexOfSource));
+	assert(graph->HasNode(indexOfTarget));
+	//find shortest path
+	std::unordered_map<size_t,size_t> distance;
+	//auto& distance = distance_sssp;
+	RunSPFA(graph,indexOfSource,distance);
+ 
+	assert(graph->HasNode(indexOfThrough_A));
+	assert(graph->HasNode(indexOfThrough_B));
+	assert(indexOfSource != indexOfThrough_A);	
+	assert(indexOfSource != indexOfThrough_B);
+	assert(indexOfTarget != indexOfThrough_A);
+	assert(indexOfTarget != indexOfThrough_B);
+
+	size_t sum_all = 0;
+	size_t sum_through = 0;
+	int NodeA_Flag = 0;
+	int NodeB_Flag = 0;
+
+	queue<pair<size_t, bool>> path;//pair(indexOfNode, Does it Pass
+	//through the give node?
+	path.push(make_pair(indexOfTarget, false));
+	//breadth-first search
+	while(!path.empty()){
+		auto current = path.front();
+		if(current.first == indexOfThrough_A){
+			if(NodeB_Flag == 1)current.second = true;
+			else NodeA_Flag = 1;
+		}
+			
+		if(current.first == indexOfThrough_B){
+			if(NodeA_Flag == 1)current.second = true;
+			else NodeB_Flag = 1;
+		}
+
+		if(current.first != indexOfThrough_B && current.first != indexOfThrough_A){
+			if(NodeA_Flag == 1 || NodeB_Flag == 1){
+				NodeA_Flag = 0;
+				NodeB_Flag = 0;
+			}
+		}
+
+		if(indexOfSource == current.first){
+			sum_all++;
+			if(current.second)
+				sum_through++;
+		}
+		else{
+			size_t current_distance = distance[current.first];
+			auto current_node = graph->find(current.first);
+			for(auto other = current_node->begin(); other != current_node->end(); other++){
+				if(distance[*other] == current_distance - 1)
+					path.push(make_pair(*other, current.second));
+			}
+		}
+		path.pop();
+	}
+	return make_pair(sum_all, sum_through);	
+}
+
+
+
+void GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& CnCom){
+	
+	vector<size_t> VisitedNId(graph->GetNumberOfNodes()+1);
+	queue<size_t> NIdQ;
+	
+	VisitedNId.push_back(NId);
+	NIdQ.push(NId);	
+	vector<size_t>::iterator result_neighbor;
+
+	while(! NIdQ.empty()){
+		auto node = graph->find(NIdQ.front()); NIdQ.pop();
+		
+		for(auto neighbNode = node->begin(); neighbNode != node->end(); neighbNode++){
+			const size_t NId_neighbor = (*neighbNode);
+			result_neighbor = find(VisitedNId.begin(),VisitedNId.end(),NId_neighbor);
+			if( result_neighbor != VisitedNId.end()){
+				NIdQ.push(NId_neighbor);
+				VisitedNId.push_back(NId_neighbor);
+			}
+		}
+	}
+	CnCom = VisitedNId;
+}
+
+
+// Connected components of a graph define clusters
+// OutDegH and OrigEdges stores node degrees and number of edges in the original graph
+double _GirvanNewmanGetModularity(UGraph::pGraph& G, const unordered_map<size_t, size_t> OutDegH, const int& OrigEdges, vector< vector<size_t>>& CnComV){	
+	GetWccs(G, CnComV);// get communities
+	double Mod = 0;
+	for (int c = 0; c < CnComV.size(); c++) {
+		const vector<size_t> NIdV = CnComV[c];
+		double EIn=0, EEIn=0;
+		for (int i = 0; i < NIdV.size(); i++) {			
+			auto node = G->find(NIdV[i]);
+			EIn += node->GetDegree();
+			EEIn += OutDegH[*node];
+		}
+		Mod += (EIn-EEIn*EEIn/(2.0 * G->GetNumberOfEdges()));
+	}
+	if (Mod == 0) { return 0; }
+	else { return Mod/(2.0 * G->GetNumberOfEdges()); }
+	
+}
+
+
+// Maximum modularity clustering by Girvan-Newman algorithm (slow)
+//  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
+double CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV) { 
+  std::unordered_map<size_t, size_t> OutDegH;
+  const size_t NEdges = graph->GetNumberOfEdges();
+  for (auto node = graph->begin(); node != graph->end(); node++) {
+    OutDegH[*node] = node->GetDegree();
+  }
+  double BestQ = -1; // modularity
+
+  vector< vector<size_t>> CurCmtyV, temp;
+  CmtyV.clear();
+  vector<size_t> Cmty1, Cmty2;
+  while (true) {
+    CmtyGirvanNewmanStep(graph, Cmty1, Cmty2);
+    const double Q = _GirvanNewmanGetModularity(graph, OutDegH, NEdges, CurCmtyV);
+    //printf("current modularity: %f\n", Q);
+    if (Q > BestQ) {
+      BestQ = Q; 
+
+	  temp = CmtyV;
+	  CmtyV = CurCmtyV; 
+	  CurCmtyV = temp;
+    }
+	if (Cmty1.size() == 0 || Cmty2.size() == 0) { break; }
+  }
+  return BestQ;
+}
+
 
 
 	
@@ -954,9 +1229,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	double activity_attenuation_b = -0.027;
 	double degree_coefficient = 0.75;
 
-	int event_response_number_init = 10;
-
-	
+	int event_response_number_init = 10;	
 
 	//变量初始化
 	
