@@ -27,7 +27,6 @@
     <UseOfMfc>Static</UseOfMfc>
     <UseOfAtl>false</UseOfAtl>
     <UseIntelMKL>Sequential</UseIntelMKL>
-    <PlatformToolset>Intel C++ Compiler XE 13.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Intel_SSA|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -36,7 +35,6 @@
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <UseIntelMKL>Parallel</UseIntelMKL>
-    <PlatformToolset>Intel C++ Compiler XE 13.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -44,7 +42,6 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <PlatformToolset>Intel C++ Compiler XE 13.0</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">

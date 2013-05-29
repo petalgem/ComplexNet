@@ -1013,7 +1013,7 @@ void scn::GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 //	4. Steps 2 and 3 are repeated until no edges remain.
 //  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
 // Keep removing edges from Graph until one of the connected components of Graph splits into two.
-void scn::CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<size_t>& Cmty2) {
+void scn::CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<size_t>& Cmty2, vector<pair<size_t, size_t>>& EdgeDeleted) {
 	
     vector< pair<pair<size_t, size_t>, double>> BtwEH;  
 	Cmty1.clear();  Cmty2.clear();
@@ -1029,6 +1029,7 @@ void scn::CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vec
 	const size_t NId1 = BtwEH[0].first.first;
     const size_t NId2 = BtwEH[0].first.second;
     graph->RemoveEdge(NId1, NId2);
+	EdgeDeleted.push_back(make_pair(NId1, NId2));
     if (GetShortestDistance(graph, NId1, NId2) == -1) { // two components
       GetNodeWcc(graph, NId1, Cmty1);
       GetNodeWcc(graph, NId2, Cmty2);
@@ -1188,6 +1189,7 @@ double scn::GirvanNewmanGetModularity(UGraph::pGraph& G, unordered_map<size_t, s
 //  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
 double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV) { 
   std::unordered_map<size_t, size_t> OutDegH;
+  vector<pair<size_t, size_t>> EdgeDeleted;
   const size_t NEdges = graph->GetNumberOfEdges();
   for (auto node = graph->begin(); node != graph->end(); node++) {
     OutDegH[*node] = node->GetDegree();
@@ -1198,7 +1200,7 @@ double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>
   CmtyV.clear();
   vector<size_t> Cmty1, Cmty2;
   while (true) {
-    CmtyGirvanNewmanStep(graph, Cmty1, Cmty2);
+    CmtyGirvanNewmanStep(graph, Cmty1, Cmty2, EdgeDeleted);
     const double Q = GirvanNewmanGetModularity(graph, OutDegH, NEdges, CurCmtyV);
     //printf("current modularity: %f\n", Q);
     if (Q > BestQ) {
@@ -1210,6 +1212,9 @@ double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>
 	if (Cmty1.size() == 0 || Cmty2.size() == 0) { break; }
   }
 
+  for(int i = 0; i <  EdgeDeleted.size(); i++){
+	  graph->AddEdge(EdgeDeleted[i].first, EdgeDeleted[i].second);
+  }
   return BestQ;
 }
 
@@ -1217,26 +1222,22 @@ double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>
 
 	
 UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
-{	
-	
+{
 	//需要设置的参数
 	double node_probability = 0.027;
 	double event_probability = 0.0458;
 	double attraction_attenuation_y = -0.03;
 	double activity_attenuation_b = -0.027;
 	double degree_coefficient = 0.75;
-
 	int event_response_number_init = 10;	
 
-	//变量初始化
-	
+	//变量初始化	
 	int active_event_nodeindex = -1;	
 	double max_event_attraction = 0;
 
 	int time_step = 0;
 	int newNodeAdd_index = 0;
 	int newEventAdd_index = 0;
-
 
 	int active_node_index_first = 0;
 	int active_node_index_second = 0;
@@ -1255,15 +1256,12 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	struct Node_Attribute
 	{
 		vector<double> vecInterest;
-
 		double activity;
 		int timestep_node_gen;
-
 		double event_attraction;
 		int event_flag;
 		int event_response_number;
 		int timestep_event_gen;
-
 		int group_number;
 	};
 	
@@ -1278,22 +1276,18 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		temp->event_flag = 0;
 		temp->event_response_number = 0;
 		temp->timestep_node_gen = 0;
-		temp->timestep_event_gen = 0;
-		
+		temp->timestep_event_gen = 0;		
 
-		for(int i=0;i<6;i++)
-		{
+		for(int i=0;i<6;i++){
 			temp->vecInterest.push_back(pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030));
 		}
 		network->SetNodeData(node, temp);
 
-		if(node->GetIndexOfNode() == 1)
-		{
+		if(node->GetIndexOfNode() == 1){
 			network->GetNodeData(node)->event_attraction = 1;
 			network->GetNodeData(node)->event_response_number = rand() % event_response_number_init;
 			network->GetNodeData(node)->event_flag = 1;
 		}
-
 	}
 	
 	
@@ -1302,8 +1296,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		time_step++;
 		
 		//generate new event to a node with event_probability
-		if(double(rand() % RAND_MAX) / RAND_MAX < event_probability)
-		{
+		if(double(rand() % RAND_MAX) / RAND_MAX < event_probability){
 			do
 			{active_event_nodeindex = rand() % (graph->GetNumberOfNodes());}
 			while(network->GetNodeData(active_event_nodeindex)->event_flag == 1);
@@ -1312,15 +1305,13 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			network->GetNodeData(active_event_nodeindex)->event_response_number = rand() % event_response_number_init;
 			network->GetNodeData(active_event_nodeindex)->event_attraction = 1;
 			network->GetNodeData(active_event_nodeindex)->timestep_event_gen = time_step;
-			newEventAdd_index++;
-			
+			newEventAdd_index++;			
 		}
 
 		
 
 		//generate new node with node_probability
-		if(double(rand() % RAND_MAX) / RAND_MAX < node_probability)
-		{
+		if(double(rand() % RAND_MAX) / RAND_MAX < node_probability){
 			graph->AddNode();
 			active_node_index_first = graph->GetNumberOfNodes()-1;
 
@@ -1334,8 +1325,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			temp->timestep_event_gen = 0;
 
 
-			for(int i=0;i<6;i++)
-			{
+			for(int i=0;i<6;i++){
 				temp->vecInterest.push_back(pow(((1- pow(1e-10,3.3))*(double(rand())/double(RAND_MAX))+pow(1e-10,3.3)),0.303030303030));
 			}
 
@@ -1348,8 +1338,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 
 			
 		//calculate activity of node and remaining step of event
-		for(auto node = graph->begin(); node != graph->end(); node++)
-		{
+		for(auto node = graph->begin(); node != graph->end(); node++){
 			network->GetNodeData(node->GetIndexOfNode())->activity = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_node_gen) * activity_attenuation_b);
 			if(network->GetNodeData(node)->event_response_number == 0)
 			{
@@ -1362,7 +1351,6 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 				network->GetNodeData(node->GetIndexOfNode())->event_response_number--;
 				network->GetNodeData(node->GetIndexOfNode())->event_attraction = exp((time_step - network->GetNodeData(node->GetIndexOfNode())->timestep_event_gen) * attraction_attenuation_y);			
 			}
-
 			if(newEventAdd_index == 0 && network->GetNodeData(node->GetIndexOfNode())->event_flag == 1)
 			{
 				if(max_event_attraction < network->GetNodeData(node->GetIndexOfNode())->event_attraction)
@@ -1370,9 +1358,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 					max_event_attraction = network->GetNodeData(node->GetIndexOfNode())->event_attraction;
 					active_event_nodeindex = node->GetIndexOfNode();
 				}
-
-			}
-			
+			}			
 		}
 		
 
@@ -1440,11 +1426,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 						max_activity_third = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_third = node->GetIndexOfNode();
 					}
-
-
 				}
 			}
-
 		}
 		
 
@@ -1456,8 +1439,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			active_node_index_second = 2;
 			active_node_index_third = 3;
 
-			if(max_activity_second < max_activity_third)
-			{
+			if(max_activity_second < max_activity_third){
 				term = max_activity_second;
 				max_activity_second = max_activity_third;
 				max_activity_third = term;
@@ -1467,8 +1449,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 				active_node_index_third = term_index;
 			}
 
-			for(auto node = graph->begin(); node != graph->end(); node++)
-			{
+			for(auto node = graph->begin(); node != graph->end(); node++){
 				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
 				{
 					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
