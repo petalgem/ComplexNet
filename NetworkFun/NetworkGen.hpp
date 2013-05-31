@@ -56,10 +56,11 @@ namespace scn
 
    void GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV);
    void CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vector<size_t>& Cmty2, vector<pair<size_t, size_t>>& EdgeDeleted);
-   void GetBetweennessCentralityOfEdge(UGraph::pGraph& graph, vector< pair<pair<size_t, size_t>, double>> BtwEH);
+   void GetBetweennessCentralityOfEdge(UGraph::pGraph graph, vector< pair<pair<size_t, size_t>, double>>& BtwEH);
    pair<size_t, size_t> GetNumberOfShortestPathEdge(UGraph::pGraph graph,size_t indexOfSource, size_t indexOfTarget, size_t indexOfThrough_A, size_t indexOfThrough_B);
    void GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& CnCom);
    double GirvanNewmanGetModularity(UGraph::pGraph& G, const std::unordered_map<size_t, size_t> OutDegH, const int& OrigEdges, vector< vector<size_t>>& CnComV);
+   void GetBetweennessCentr(UGraph::pGraph graph, const vector<size_t>& BtwNIdV, vector<pair<size_t, double>>& NodeBtwH, const bool& DoNodeCent, vector<pair<pair<size_t, size_t>, double>>& EdgeBtwH, const bool& DoEdgeCent);
    NETWORKLIBDLL double CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV);
 
 

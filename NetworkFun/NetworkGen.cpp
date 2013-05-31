@@ -960,7 +960,7 @@ double scn::RenormalizeBySpectralBisection(UGraph::pGraph graph, size_t length)
 
 void scn::GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 {
-	vector<size_t> VisitedNId(graph->GetNumberOfNodes()+1);
+	vector<size_t> VisitedNId;
 	queue<size_t> NIdQ;
 	vector<size_t> CcNIdV(1);
 	CnComV.clear();
@@ -978,7 +978,7 @@ void scn::GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 	for(auto node_restcheck = graph->begin(); node_restcheck != graph->end(); node_restcheck++){
 		const size_t NId = node_restcheck->GetIndexOfNode();
 		result = find( VisitedNId.begin(), VisitedNId.end(), NId );
-		if( result != VisitedNId.end()){
+		if( result == VisitedNId.end()){
 			VisitedNId.push_back(NId);
 			NIdQ.push(NId);
 			CcNIdV.clear();
@@ -990,7 +990,7 @@ void scn::GetWccs(UGraph::pGraph& graph, vector< vector<size_t>>& CnComV)
 				for(auto neighbNode = node->begin(); neighbNode != node->end(); neighbNode++){
 					const size_t NId_neighbor = (*neighbNode);
 					result_neighbor = find(VisitedNId.begin(),VisitedNId.end(),NId_neighbor);
-					if( result_neighbor != VisitedNId.end()){
+					if( result_neighbor == VisitedNId.end()){
 						NIdQ.push(NId_neighbor); 
 						VisitedNId.push_back(NId_neighbor);
 						CcNIdV.push_back(NId_neighbor);
@@ -1040,37 +1040,44 @@ void scn::CmtyGirvanNewmanStep(UGraph::pGraph& graph, vector<size_t>& Cmty1, vec
 
 
 
-void scn::GetBetweennessCentralityOfEdge(UGraph::pGraph& graph, vector< pair<pair<size_t, size_t>, double>> BtwEH)
+void scn::GetBetweennessCentralityOfEdge(UGraph::pGraph graph, vector< pair<pair<size_t, size_t>, double>>& BtwEH)
 {
 
 	double sum = 0;
 	pair<size_t, size_t> edge; 
-	for(auto node1 = graph->begin(); node1 != graph->end(); node1++)
+	for(size_t i = 0; i < graph->GetNumberOfNodes() ; i++)
 	{
-		for(auto node2 = graph->begin(); node2 != graph->end() && (*node1 > *node2); node2++)
+		for(size_t j = 0; j < graph->GetNumberOfNodes() && (j < i); j++)
 		{
-			if(graph->HasEdge(node1, node2))
+			if(graph->HasEdge(graph->find(i), graph->find(j)))
 			{
-				for(auto node3 = graph->begin(); node3 != graph->end(); node3++)
+				for(size_t k = 0; k < graph->GetNumberOfNodes() ; k++)
 				{
-					if(*node3 == *node1 || *node3 == *node2)
+					if(k == i || k == j)
 						continue;
-					for(auto node4 = graph->begin(); node4 != graph->end() && (*node3 > *node4); node4++)
+					for(size_t l = 0; l < graph->GetNumberOfNodes() && (l < k); l++)
 					{
-						if(*node4 == *node1 || *node4 == *node2 )
+						if(l == i || l == j )
 							continue;
 						//compute
-						auto result = GetNumberOfShortestPathEdge(graph,*node3, *node4, *node1, *node2);
-						sum += static_cast<double>(result.second) / 
-							static_cast<double>(result.first);
+						if (GetShortestDistance(graph, k, l) != -1){
+							auto result = GetNumberOfShortestPathEdge(graph, k, l, i, j);
+							sum += static_cast<double>(result.second) / 
+								static_cast<double>(result.first);
+						}
 					}				
 				}
-				BtwEH.push_back(make_pair(make_pair(*node1, *node2), sum));
+				BtwEH.push_back(make_pair(make_pair(i, j), sum));
 				sum = 0;			
 			}
 		}
 	}
 }
+
+
+
+
+
 
 
 
@@ -1093,58 +1100,47 @@ pair<size_t, size_t> scn::GetNumberOfShortestPathEdge(UGraph::pGraph graph,size_
 
 	size_t sum_all = 0;
 	size_t sum_through = 0;
-	int NodeA_Flag = 0;
-	int NodeB_Flag = 0;
+	/*int NodeA_Flag = 0;
+	int NodeB_Flag = 0;*/
 
 	queue<pair<size_t, bool>> path;//pair(indexOfNode, Does it Pass
 	//through the give node?
 	path.push(make_pair(indexOfTarget, false));
 	//breadth-first search
 	while(!path.empty()){
-		auto current = path.front();
-		if(current.first == indexOfThrough_A){
-			if(NodeB_Flag == 1)current.second = true;
-			else NodeA_Flag = 1;
-		}
-			
-		if(current.first == indexOfThrough_B){
-			if(NodeA_Flag == 1)current.second = true;
-			else NodeB_Flag = 1;
-		}
-
-		if(current.first != indexOfThrough_B && current.first != indexOfThrough_A){
-			if(NodeA_Flag == 1 || NodeB_Flag == 1){
-				NodeA_Flag = 0;
-				NodeB_Flag = 0;
-			}
-		}
-
+		auto current = path.front(); path.pop();
 		if(indexOfSource == current.first){
 			sum_all++;
-			if(current.second)
-				sum_through++;
+			if(current.second){
+				sum_through++; 
+			}
 		}
 		else{
 			size_t current_distance = distance[current.first];
 			auto current_node = graph->find(current.first);
 			for(auto other = current_node->begin(); other != current_node->end(); other++){
 				if(distance[*other] == current_distance - 1)
+				{					
+					if(current.first == indexOfThrough_A && *other == indexOfThrough_B)
+						current.second = true;						
+					if(current.first == indexOfThrough_B && *other == indexOfThrough_A)
+						current.second = true;
 					path.push(make_pair(*other, current.second));
+				}
 			}
 		}
-		path.pop();
+		
 	}
 	return make_pair(sum_all, sum_through);	
 }
 
 
 
-void scn::GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& CnCom){
+void scn::GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& VisitedCnCom){
 	
-	vector<size_t> VisitedNId(graph->GetNumberOfNodes()+1);
 	queue<size_t> NIdQ;
 	
-	VisitedNId.push_back(NId);
+	VisitedCnCom.push_back(NId);
 	NIdQ.push(NId);	
 	vector<size_t>::iterator result_neighbor;
 
@@ -1153,14 +1149,14 @@ void scn::GetNodeWcc(UGraph::pGraph& graph, const size_t& NId, vector<size_t>& C
 		
 		for(auto neighbNode = node->begin(); neighbNode != node->end(); neighbNode++){
 			const size_t NId_neighbor = (*neighbNode);
-			result_neighbor = find(VisitedNId.begin(),VisitedNId.end(),NId_neighbor);
-			if( result_neighbor != VisitedNId.end()){
+			result_neighbor = find(VisitedCnCom.begin(),VisitedCnCom.end(),NId_neighbor);
+			if( result_neighbor == VisitedCnCom.end()){
 				NIdQ.push(NId_neighbor);
-				VisitedNId.push_back(NId_neighbor);
+				VisitedCnCom.push_back(NId_neighbor);
 			}
 		}
 	}
-	CnCom = VisitedNId;
+
 }
 
 
@@ -1177,17 +1173,105 @@ double scn::GirvanNewmanGetModularity(UGraph::pGraph& G, unordered_map<size_t, s
 			EIn += node->GetDegree();
 			EEIn += OutDegH[*node];
 		}
-		Mod += (EIn-EEIn*EEIn/(2.0 * G->GetNumberOfEdges()));
+		Mod += (EIn-EEIn*EEIn/(2.0 * OrigEdges));
 	}
 	if (Mod == 0) { return 0; }
-	else { return Mod/(2.0 * G->GetNumberOfEdges()); }
+	else { return Mod/(2.0 * OrigEdges); }
 	
 }
+
+
+void scn::GetBetweennessCentr(UGraph::pGraph graph, const vector<size_t>& BtwNIdV, vector<pair<size_t, double>>& NodeBtwH, const bool& DoNodeCent, vector<pair<pair<size_t, size_t>, double>>& EdgeBtwH, const bool& DoEdgeCent) {
+  /*if (DoNodeCent) { NodeBtwH.clear(); }
+  if (DoEdgeCent) { EdgeBtwH.clear(); }
+  const size_t nodes = graph->GetNumberOfNodes();
+  stack<size_t> S;
+  queue<size_t> Q;
+  vector<pair<size_t,vector<size_t>>> P(nodes); // one vector for every node
+  vector<pair<size_t, double>> delta(nodes);
+  vector<pair<size_t, size_t>> sigma(nodes), d(nodes);
+  vector<size_t> a;
+  // init
+  for (auto node = graph->begin(); node != graph->end(); node++) {
+    if (DoNodeCent) {
+      NodeBtwH.push_back(make_pair(node->GetIndexOfNode(), 0)); }
+    if (DoEdgeCent) {
+		for(auto e = node->begin(); e != node->end(); e++){
+        if (node->GetIndexOfNode() < (*e)){
+			EdgeBtwH.push_back(make_pair(make_pair(node->GetIndexOfNode(), (*e)), 0)); }
+      }
+    }
+    sigma.push_back(make_pair(node->GetIndexOfNode(), 0));
+    d.push_back(make_pair(node->GetIndexOfNode(), -1));
+    P.push_back(make_pair(node->GetIndexOfNode(), a));
+    delta.push_back(make_pair(node->GetIndexOfNode(), 0));
+  }
+  auto sigma_init = sigma;
+  auto d_init = d;
+  auto delta_init = delta;
+
+  
+
+  // calc betweeness
+  for (auto k = graph->begin(); k != graph->end(); k++) {
+    // reset
+    for (size_t i = 0; i < sigma.size(); i++) {
+      vector<pair<size_t, size_t>> 
+		sigma = sigma_init;  d = d_init;  delta = delta_init; 
+    }
+
+	Q.push(k->GetIndexOfNode());
+	find()
+
+    sigma.AddDat(NI.GetId(), 1);
+    d.AddDat(NI.GetId(), 0);
+
+
+
+    while (! Q.empty()) {
+      const int v = Q.Top();  Q.Pop();
+      const TUNGraph::TNodeI NI2 = Graph->GetNI(v);
+      S.Push(v);
+      const int VDat = d.GetDat(v);
+      for (int e = 0; e < NI2.GetOutDeg(); e++) {
+        const int w = NI2.GetOutNId(e);
+        if (d.GetDat(w) < 0) { // find w for the first time
+          Q.Push(w);
+          d.AddDat(w, VDat+1);
+        }
+        //shortest path to w via v ?
+        if (d.GetDat(w) == VDat+1) {
+          sigma.AddDat(w) += sigma.GetDat(v);
+          P.GetDat(w).Add(v);
+        }
+      }
+    }
+    while (! S.Empty()) {
+      const int w = S.Top();
+      const double SigmaW = sigma.GetDat(w);
+      const double DeltaW = delta.GetDat(w);
+      const TIntV NIdV = P.GetDat(w);
+      S.Pop();
+      for (int i = 0; i < NIdV.Len(); i++) {
+        const int nid = NIdV[i];
+        const double c = (sigma.GetDat(nid)*1.0/SigmaW) * (1+DeltaW);
+        delta.AddDat(nid) += c;
+        if (DoEdgeCent) {
+          EdgeBtwH.AddDat(TIntPr(TMath::Mn(nid, w), TMath::Mx(nid, w))) += c; }
+      }
+      if (DoNodeCent && w != NI.GetId()) {
+        NodeBtwH.AddDat(w) += delta.GetDat(w)/2.0; }
+    }
+  }*/
+}
+
 
 
 // Maximum modularity clustering by Girvan-Newman algorithm (slow)
 //  Girvan M. and Newman M. E. J., Community structure in social and biological networks, Proc. Natl. Acad. Sci. USA 99, 7821-7826 (2002)
 double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>& CmtyV) { 
+	
+	/*
   std::unordered_map<size_t, size_t> OutDegH;
   vector<pair<size_t, size_t>> EdgeDeleted;
   const size_t NEdges = graph->GetNumberOfEdges();
@@ -1198,10 +1282,11 @@ double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>
 
   vector< vector<size_t>> CurCmtyV, temp;
   CmtyV.clear();
-  vector<size_t> Cmty1, Cmty2;
+  vector<size_t> Cmty1, Cmty2, a;
   while (true) {
     CmtyGirvanNewmanStep(graph, Cmty1, Cmty2, EdgeDeleted);
     const double Q = GirvanNewmanGetModularity(graph, OutDegH, NEdges, CurCmtyV);
+	a = Cmty1;
     //printf("current modularity: %f\n", Q);
     if (Q > BestQ) {
       BestQ = Q; 
@@ -1216,6 +1301,12 @@ double scn::CommunityGirvanNewman(UGraph::pGraph& graph, vector< vector<size_t>>
 	  graph->AddEdge(EdgeDeleted[i].first, EdgeDeleted[i].second);
   }
   return BestQ;
+  */
+	vector< pair<pair<size_t, size_t>, double>> BtwEH;
+	graph->RemoveEdge(4,7);
+	GetBetweennessCentralityOfEdge(graph, BtwEH);
+	return 1.1;
+	
 }
 
 
@@ -1229,7 +1320,7 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 	double attraction_attenuation_y = -0.03;
 	double activity_attenuation_b = -0.027;
 	double degree_coefficient = 0.75;
-	int event_response_number_init = 10;	
+	int event_response_number_init = 10;
 
 	//变量初始化	
 	int active_event_nodeindex = -1;	
@@ -1288,11 +1379,9 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 			network->GetNodeData(node)->event_response_number = rand() % event_response_number_init;
 			network->GetNodeData(node)->event_flag = 1;
 		}
-	}
+	}	
 	
-	
-	do
-	{
+	do{
 		time_step++;
 		
 		//generate new event to a node with event_probability
@@ -1366,9 +1455,9 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 		if(newNodeAdd_index == 0 && active_event_nodeindex != -1)
 		{
 
-			max_activity_first = network->GetNodeData(0)->activity * PearsonCoefficient(network->GetNodeData(0)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-			max_activity_second = network->GetNodeData(2)->activity * PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-			max_activity_third = network->GetNodeData(3)->activity * PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_first = /*network->GetNodeData(0)->activity */ PearsonCoefficient(network->GetNodeData(0)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_second = /*network->GetNodeData(2)->activity */ PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_third = /*network->GetNodeData(3)->activity */ PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
 			
 			active_node_index_first = 0;
 			active_node_index_second = 2;
@@ -1413,17 +1502,17 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
 				{
 					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-					if(max_activity_first < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
+					if(max_activity_first < (compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_first = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
+						max_activity_first = compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_first = node->GetIndexOfNode();
-					}else if(max_activity_second < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
+					}else if(max_activity_second < (compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_second = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
+						max_activity_second = compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_second = node->GetIndexOfNode();
-					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
+					} else if(max_activity_third < (compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_third = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
+						max_activity_third = compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_third = node->GetIndexOfNode();
 					}
 				}
@@ -1433,8 +1522,8 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 
 		if(newNodeAdd_index == 1 && active_event_nodeindex != -1)
 		{
-			max_activity_second = network->GetNodeData(2)->activity * PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-			max_activity_third = network->GetNodeData(3)->activity * PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_second = /*network->GetNodeData(2)->activity */ PearsonCoefficient(network->GetNodeData(2)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
+			max_activity_third = /*network->GetNodeData(3)->activity */ PearsonCoefficient(network->GetNodeData(3)->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
 			
 			active_node_index_second = 2;
 			active_node_index_third = 3;
@@ -1453,13 +1542,13 @@ UGraph::pGraph scn::GenPreferenceMemoryNetwork(size_t numberOfNodes)
 				if(network->GetNodeData(node->GetIndexOfNode())->event_flag != 1)
 				{
 					compare = PearsonCoefficient(network->GetNodeData(node->GetIndexOfNode())->vecInterest,network->GetNodeData(active_event_nodeindex)->vecInterest);
-					if(max_activity_second < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
+					if(max_activity_second < (compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_second = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
+						max_activity_second = compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_second = node->GetIndexOfNode();
-					} else if(max_activity_third < (compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
+					} else if(max_activity_third < (compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges())))
 					{
-						max_activity_third = compare * network->GetNodeData(node)->activity + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
+						max_activity_third = compare /* network->GetNodeData(node)->activity*/ + node->GetDegree() * degree_coefficient/(graph->GetNumberOfEdges());
 						active_node_index_third = node->GetIndexOfNode();
 					}
 
